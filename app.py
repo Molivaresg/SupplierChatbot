@@ -1,176 +1,149 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --------------------------------------------------
-# PAGE CONFIG & HIDE STREAMLIT BRANDING
-# --------------------------------------------------
-st.set_page_config(
-    page_title="Supplier Evaluation Assistant",
-    page_icon="🤖",
-    layout="centered"
-)
+st.set_page_config(page_title="Supplier Evaluation Assistant")
 
-hide_streamlit_style = """
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-</style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-# --------------------------------------------------
-# HEADER
-# --------------------------------------------------
-st.markdown("""
-<div style="text-align:center">
-<h1>Supplier Evaluation Assistant</h1>
-<p style="font-size:16px;color:#6c757d;">
-I help you answer questions related to the supplier evaluation form and required documents.
-</p>
-</div>
-""", unsafe_allow_html=True)
-
-st.info(
-    "👋 Welcome! Please tell me which question you have about the supplier evaluation form. "
-    "I will guide you on what information or document you need to upload."
-)
-
-# --------------------------------------------------
-# API CONFIG
-# --------------------------------------------------
-if "GOOGLE_API_KEY" not in st.secrets:
-    st.error("⚠️ GOOGLE_API_KEY is missing in Streamlit Secrets.")
-    st.stop()
+st.title("Supplier Evaluation Assistant")
+st.write("👋 Welcome! I can help you understand what document or evidence you need to upload.")
 
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+model = genai.GenerativeModel("gemini-flash-latest")
 
-model = genai.GenerativeModel("gemini-1.5-flash-latest")
-
-# --------------------------------------------------
-# SYSTEM PROMPT (VERY IMPORTANT)
-# --------------------------------------------------
 SYSTEM_PROMPT = """
 You are a Supplier Evaluation Assistant.
 
-RULES:
-- Use ONLY the information in the knowledge base.
-- DO NOT invent or assume information.
-- Answer clearly and briefly.
-- Respond in the SAME language as the user.
-- If the user asks for an example and it exists, explain it briefly.
-- If the information is not in the knowledge base, respond exactly with:
+Rules:
+- Always respond in the SAME language used by the user.
+- Use ONLY the information provided in the Knowledge Base.
+- You may rephrase or explain the requirement in simple words if the user does not understand.
+- Do NOT add new policies, legal context, or assumptions.
+- Do NOT invent documents or requirements.
+- Focus on explaining what document or evidence must be uploaded.
+- If the information is not explicitly available in the Knowledge Base, reply exactly:
   "This information is not available. Please follow the official instructions."
-- Keep a professional and helpful tone.
 """
 
-# --------------------------------------------------
-# KNOWLEDGE BASE
-# --------------------------------------------------
 KNOWLEDGE_BASE = """
 1. Passport retention:
-Question: Does your company retain passports or migrant employee documents?
-Required document: Signed declaration of NO document retention policy.
-Example: https://vegaguerrero.com/wp-content/uploads/2023/03/BLOG-VGA.png
+Question: Do you retain passports or migrant documents of foreign employees?
+Evidence: Signed declaration of NO document retention policy.
+Link: https://vegaguerrero.com/migratorio/as-a-foreigner-in-mexico-should-i-always-carry-my-passport-or-identification-document-with-me/?lang=en
 
-2. Deposits or fees:
-Required document: Hiring policy that prohibits deposits or fees (PDF).
+2. Recruitment payments:
+Question: Do you request deposits or payments to start or keep a job?
+Evidence: Recruitment policy prohibiting fees or deposits (PDF).
 
-3. Internal fines:
-Required document: Internal regulation prohibiting economic penalties (PDF).
+3. Economic penalties:
+Question: Are there internal fines or economic penalties for workers?
+Evidence: Internal regulations prohibiting financial sanctions (PDF).
 
-4. Free resignation:
-Required document: Voluntary resignation procedure (PDF).
+4. Voluntary resignation:
+Question: How do you guarantee employees can resign freely?
+Evidence: Voluntary resignation procedure and acknowledgement receipt (PDF).
 
 5. Access to documents:
-Required document: HR policy on free access to personal documents (PDF).
+Question: Do employees have free access to their personal documents?
+Evidence: HR policy on voluntary custody and free access (PDF).
 
-6. Facility exits:
-Required document: Access and exit policy during breaks (PDF).
+6. Exit during breaks:
+Question: Can employees leave the facilities during breaks or outside working hours?
+Evidence: Access and exit policy with schedules and permissions (PDF).
 
 7. Working hours:
-Required document: Shift schedule and attendance record example (PDF).
+Question: Do working hours comply with labor laws and mandatory rest?
+Evidence: Shift schedule and attendance records (PDF).
 
 8. Overtime:
-Required document: Payroll receipts showing paid overtime and overtime policy (PDF).
+Question: Are employees required to work overtime?
+Evidence: Payroll receipts showing overtime payment and overtime policy (PDF).
 
 9. Non-discrimination:
-Required document: Equality and non-discrimination policy (PDF).
+Question: Is recruitment free from discrimination?
+Evidence: Equality and non-discrimination policy (PDF).
 
 10. Written contracts:
-Required document: Sample employment contract (PDF).
+Question: Do employees receive a written contract before starting work?
+Evidence: Employment contract template (PDF).
 
-11. Clear conditions:
-Required document: Job offer or offer letter (PDF).
+11. Job conditions:
+Question: Are salary, schedule, duties and benefits explained before hiring?
+Evidence: Job offer letter or employment offer format (PDF).
 
 12. Social security:
-Required document: Social security registration evidence (PDF).
+Question: Are employees registered with social security?
+Evidence: Social security registration notices (PDF).
 
-13. Health & safety:
-Required document: Annual occupational health and safety program (PDF).
+13. Health and safety:
+Question: Do you have a formal occupational health and safety program?
+Evidence: Annual OHS program and training plan (PDF).
 
 14. Accidents:
-Required document: Accident reporting procedure and log (PDF).
+Question: How are work-related incidents handled?
+Evidence: Incident reporting procedure and accident log (PDF).
 
 15. Migration costs:
-Required document: Migration management policy (PDF).
+Question: Are migration permits managed without charging workers?
+Evidence: Migration management and cost responsibility policy (PDF).
 
-16. Foreign employees:
-Required document: Guide for foreign employees (PDF).
+16. Foreign workers information:
+Question: Do foreign employees receive clear information on their rights?
+Evidence: Guide or manual for foreign employees (PDF).
 
 17. Freedom of association:
-Required document: Freedom of association policy (PDF).
+Question: Can employees join or form unions?
+Evidence: Freedom of association policy (PDF).
 
 18. Complaints channel:
-Required document: Whistleblowing or complaints procedure (PDF).
+Question: Is there a confidential complaints channel?
+Evidence: Complaints procedure and anonymous reporting channel (PDF).
 
 19. Supplier standards:
-Required document: Supplier code of conduct (PDF).
+Question: Are suppliers required to comply with labor standards?
+Evidence: Signed supplier code of conduct (PDF).
 
 20. Audits:
-Required document: Recent labor audit report (PDF).
+Question: Are labor practices audited?
+Evidence: Recent labor audit report (PDF).
 """
 
-# --------------------------------------------------
-# CHAT MEMORY
-# --------------------------------------------------
+
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {
+            "role": "assistant",
+            "content": "Hello 👋 How can I help you with the supplier evaluation form?"
+        }
+    ]
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# --------------------------------------------------
-# USER INPUT
-# --------------------------------------------------
-if user_input := st.chat_input("Type your question here..."):
+if user_input := st.chat_input("Type your question here"):
     st.session_state.messages.append({"role": "user", "content": user_input})
-
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    try:
-        final_prompt = f"""
+    prompt = f"""
 {SYSTEM_PROMPT}
 
-KNOWLEDGE BASE:
+Knowledge Base:
 {KNOWLEDGE_BASE}
+
+Conversation history:
+{st.session_state.messages}
 
 User question:
 {user_input}
 """
-        response = model.generate_content(final_prompt)
 
-        with st.chat_message("assistant"):
-            st.markdown(response.text)
+    response = model.generate_content(prompt)
 
-        st.session_state.messages.append(
-            {"role": "assistant", "content": response.text}
-        )
+    with st.chat_message("assistant"):
+        st.markdown(response.text)
 
-    except Exception as e:
-        st.error(f"Error: {e}")
-
+    st.session_state.messages.append(
+        {"role": "assistant", "content": response.text}
     )
+
 

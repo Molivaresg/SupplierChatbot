@@ -13,7 +13,7 @@ if "GOOGLE_API_KEY" not in st.secrets:
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # 3. Model (cheap + fast)
-model = genai.GenerativeModel("models/gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-flash-latest")
 
 # 4. SYSTEM RULES (VERY IMPORTANT)
 SYSTEM_PROMPT = """

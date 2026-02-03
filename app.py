@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 
-st.set_page_config(page_title="Supplier Evaluation Assistant")
+st.set_page_config(page_title="Parts Development Assistant")
 
 # Hide Streamlit & GitHub branding
 hide_streamlit_style = """
@@ -13,8 +13,8 @@ header {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.title("Supplier Evaluation Assistant")
-st.write("👋 Welcome! I can help you understand what document or evidence you need to upload.")
+st.title("Parts Development Assistant")
+st.write("Welcome! I'm here to help you with the technical requirements and documents needed for your compliance evaluation.")
 
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 model = genai.GenerativeModel("gemini-flash-latest")
@@ -41,11 +41,13 @@ Ejemplo: https://i0.wp.com/enlacelatinonc.org/wp-content/uploads/2021/05/%C2%BFP
 
 2. Recruitment payments:
 Question: Do you request deposits or payments to start or keep a job?
-Evidence: Recruitment policy prohibiting fees or deposits (PDF).
+Evidence: Recruitment policy prohibiting fees or deposits 
+Ejemplo: https://www.business.com/_next/image/?url=https%3A%2F%2Fimages.business.com%2Fapp%2Fuploads%2F2017%2F10%2F18093935%2Fwhen-to-require-business-deposit-1024x572.jpg&w=2048&q=80
 
 3. Economic penalties:
 Question: Are there internal fines or economic penalties for workers?
-Evidence: Internal regulations prohibiting financial sanctions (PDF).
+Evidence: Internal regulations prohibiting financial sanctions 
+Ejemplo: https://upriseri.com/wp-content/uploads/2023/04/fines-as-punishment-deterent.jpg
 
 4. Voluntary resignation:
 Question: How do you guarantee employees can resign freely?

@@ -1,19 +1,10 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Page config
-st.set_page_config(
-    page_title="Supplier Evaluation Assistant",
-    layout="centered"
-)
+st.set_page_config(page_title="Supplier Evaluation Assistant")
 
 st.title("Supplier Evaluation Assistant")
-st.write("👋 Welcome! I can help you understand what document or evidence to upload.")
-
-# API Key
-if "GOOGLE_API_KEY" not in st.secrets:
-    st.error("Missing GOOGLE_API_KEY in Streamlit secrets.")
-    st.stop()
+st.write("👋 Welcome! I can help you understand what document or evidence you need to upload.")
 
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 model = genai.GenerativeModel("gemini-flash-latest")
@@ -22,12 +13,14 @@ SYSTEM_PROMPT = """
 You are a Supplier Evaluation Assistant.
 
 Rules:
-- Answer ONLY using the Knowledge Base.
-- Do NOT add explanations or assumptions.
-- Be brief and clear.
-- Focus on what document or evidence must be uploaded.
-- If the information is not explicitly available, reply exactly:
-"This information is not available. Please follow the official instructions."
+- Always respond in the SAME language used by the user.
+- Use ONLY the information provided in the Knowledge Base.
+- You may rephrase or explain the requirement in simple words if the user does not understand.
+- Do NOT add new policies, legal context, or assumptions.
+- Do NOT invent documents or requirements.
+- Focus on explaining what document or evidence must be uploaded.
+- If the information is not explicitly available in the Knowledge Base, reply exactly:
+  "This information is not available. Please follow the official instructions."
 """
 
 KNOWLEDGE_BASE = """
@@ -113,7 +106,6 @@ Evidence: Recent labor audit report (PDF).
 """
 
 
-# Chat memory
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
@@ -122,12 +114,10 @@ if "messages" not in st.session_state:
         }
     ]
 
-# Display chat
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# User input
 if user_input := st.chat_input("Type your question here"):
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
@@ -138,6 +128,9 @@ if user_input := st.chat_input("Type your question here"):
 
 Knowledge Base:
 {KNOWLEDGE_BASE}
+
+Conversation history:
+{st.session_state.messages}
 
 User question:
 {user_input}

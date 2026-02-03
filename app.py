@@ -13,7 +13,8 @@ if "GOOGLE_API_KEY" not in st.secrets:
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # 3. Inicializar el modelo con el nombre correcto
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-flash-latest")
+
 
 # 4. Tu base de datos (Las 20 preguntas)
 BASE_DATOS = """

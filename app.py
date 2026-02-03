@@ -27,7 +27,8 @@ Rules:
 KNOWLEDGE_BASE = """
 1. Passport retention:
 Question: Do you retain passports or migrant documents of foreign employees?
-Evidence: Signed declaration of NO document retention policy (PDF).
+Evidence: Signed declaration of NO document retention policy.
+Example: https://vegaguerrero.com/migratorio/as-a-foreigner-in-mexico-should-i-always-carry-my-passport-or-identification-document-with-me/?lang=en
 
 2. Recruitment payments:
 Question: Do you request deposits or payments to start or keep a job?

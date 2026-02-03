@@ -35,7 +35,7 @@ Eres un asistente para proveedores. Responde basándote en esto:
 # 3. Configurar IA (Usando Secrets)
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('models/gemini-1.5-flash')
 except Exception as e:
     st.error("Error con la API Key. Verifica los Secrets en Streamlit.")
 

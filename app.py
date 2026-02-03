@@ -1,60 +1,76 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Page configuration
+# -----------------------------
+# PAGE CONFIG
+# -----------------------------
 st.set_page_config(page_title="Evaluation Assistant", layout="centered")
-st.title("🤖 Supplier Support Chatbot")
+st.title("🤖 Supplier Evaluation Assistant")
 
-# 2. API Key
+st.markdown("""
+👋 **Welcome!**
+
+I can help you answer questions related to the supplier evaluation form  
+and required documents. Please type your question below.
+""")
+
+# -----------------------------
+# API KEY
+# -----------------------------
 if "GOOGLE_API_KEY" not in st.secrets:
     st.error("⚠️ Please configure 'GOOGLE_API_KEY' in Streamlit Secrets.")
     st.stop()
 
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# 3. Model (cheap + fast)
-model = genai.GenerativeModel("gemini-flash-latest")
+# -----------------------------
+# MODEL (cheap & fast)
+# -----------------------------
+model = genai.GenerativeModel("models/gemini-1.5-flash")
 
-# 4. SYSTEM RULES (VERY IMPORTANT)
+# -----------------------------
+# SYSTEM PROMPT (STRICT)
+# -----------------------------
 SYSTEM_PROMPT = """
-You are a compliance support chatbot for suppliers.
+You are a supplier support chatbot.
 
-STRICT RULES:
-- ONLY answer using the information in "AVAILABLE INFORMATION".
-- DO NOT explain policies.
-- DO NOT add context, advice, or assumptions.
+RULES:
+- Be polite and professional.
+- ONLY use the information provided.
 - DO NOT invent information.
+- DO NOT add explanations or assumptions.
 - Answer in a maximum of 2 short sentences.
-- If the answer is not explicitly in the information, reply exactly:
+- If the information is not available, reply exactly:
   "This information is not available. Please follow the official instructions."
 """
 
-# 5. AVAILABLE INFORMATION (your real source)
-BASE_DATOS = """
-AVAILABLE INFORMATION:
+# -----------------------------
+# KNOWLEDGE BASE (EDIT THIS)
+# -----------------------------
+FAQ = {
+    "passport": "Upload a clear copy of the main passport page. Documents are not retained.",
+    "payment": "No deposits are required.",
+    "penalty": "There are no financial penalties.",
+    "resignation": "There are no restrictions for resignation.",
+    "document access": "Employees always have free access to their documents.",
+    "working hours": "Working hours comply with the law and include breaks.",
+    "overtime": "Overtime is voluntary and paid.",
+    "discrimination": "There is a non-discrimination policy in place."
+}
 
-Passport:
-Documents are NOT retained.
-Evidence: No-retention policy.
+# -----------------------------
+# SIMPLE INTENT DETECTION
+# -----------------------------
+def detect_topic(user_input):
+    user_input = user_input.lower()
+    for key in FAQ.keys():
+        if key in user_input:
+            return key
+    return None
 
-Payments:
-No deposits are required.
-Evidence: Hiring policy.
-
-Penalties:
-There are no financial penalties.
-Evidence: Internal regulations.
-
-Resignation:
-No restrictions apply.
-Evidence: Termination procedure.
-
-Document access:
-Employees always have free access to their documents.
-Evidence: HR policy.
-"""
-
-# 6. Chat memory
+# -----------------------------
+# CHAT MEMORY
+# -----------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -62,31 +78,50 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 7. User input
-if prompt := st.chat_input("How can I help you?"):
+# -----------------------------
+# USER INPUT
+# -----------------------------
+if prompt := st.chat_input("Type your question here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
+
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    try:
+    topic = detect_topic(prompt)
+
+    # -----------------------------
+    # RESPONSE LOGIC
+    # -----------------------------
+    if topic:
+        context = FAQ[topic]
+
         final_prompt = f"""
 {SYSTEM_PROMPT}
 
-{BASE_DATOS}
+AVAILABLE INFORMATION:
+{context}
 
 User question:
 {prompt}
 """
 
-        response = model.generate_content(final_prompt)
+        try:
+            response = model.generate_content(final_prompt)
+            answer = response.text.strip()
+        except Exception as e:
+            answer = "An error occurred. Please try again later."
 
-        with st.chat_message("assistant"):
-            st.markdown(response.text)
+    else:
+        answer = "This information is not available. Please follow the official instructions."
 
-        st.session_state.messages.append(
-            {"role": "assistant", "content": response.text}
-        )
+    with st.chat_message("assistant"):
+        st.markdown(answer)
 
-    except Exception as e:
-        st.error(f"Error: {e}")
+    st.session_state.messages.append({"role": "assistant", "content": answer})
 
+# -----------------------------
+# HELP FOOTER
+# -----------------------------
+st.caption(
+    "Example topics: Passport, Payment, Penalty, Overtime, Document access"
+)

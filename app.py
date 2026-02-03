@@ -36,7 +36,8 @@ Rules:
 KNOWLEDGE_BASE = """
 1. Passport retention:
 Question: Do you retain passports or migrant documents of foreign employees?
-Evidence: Signed declaration of NO document retention policy (PDF).
+Evidence: Signed declaration of NO document retention policy.
+Ejemplo: https://i0.wp.com/enlacelatinonc.org/wp-content/uploads/2021/05/%C2%BFPuede-mi-empleador-retener-mi-pasaporte-1-1.jpg?fit=780%2C554&ssl=1
 
 2. Recruitment payments:
 Question: Do you request deposits or payments to start or keep a job?
